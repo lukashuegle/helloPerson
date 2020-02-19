@@ -53,7 +53,6 @@ def fliplr(img):
 def extract_feature(model, image):
     features = torch.FloatTensor()
     img = data_transforms(image)
-    print(img)
     img.unsqueeze_(0)
     n, c, h, w = img.size()
     ff = torch.FloatTensor(1,512).zero_().cuda()

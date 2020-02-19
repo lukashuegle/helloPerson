@@ -2,6 +2,7 @@
 
 from __future__ import print_function, division
 
+import logging
 import argparse
 import torch
 import torch.nn as nn
@@ -24,13 +25,16 @@ from model import ft_net, ft_net_dense, ft_net_NAS, PCB, PCB_test
 try:
     from apex.fp16_utils import *
 except ImportError: # will be 3.x series
-    print('This is not an error. If you want to use low precision, i.e., fp16, please install the apex with cuda support (https://github.com/NVIDIA/apex) and update pytorch to 1.0')
+    logging.warning('This is not an error. If you want to use low precision, i.e., fp16, please install the apex with cuda support (https://github.com/NVIDIA/apex) and update pytorch to 1.0')
 ######################################################################
 # Options
 # --------
 class feature_extraction:
 
     def __init__(self, gpu_ids, model_name, ms):
+        logging.basicConfig(filename='feature_extractor_class.log', level=logging.INFO)
+
+        t_start_init = time.time_ns()
         self.gpu_ids_arg = gpu_ids
         self.name = model_name
         self.ms = ms
@@ -96,9 +100,11 @@ class feature_extraction:
         self.use_gpu = torch.cuda.is_available()
 
         self.load_model()
-        #start model
+        #start model optimization for 1 image
         img = self.data_transforms(Image.open("../testdir/WIN_20200218_12_11_00_Pro.jpg")).unsqueeze_(0).cuda()
         self.model(img)
+        t_end_init = time.time_ns()
+        logging.debug("Init took " + (t_end_init - t_start_init)/1000000000 + " seconds")
 
 
     ######################################################################
@@ -153,7 +159,54 @@ class feature_extraction:
                 t_start_eval = time.time_ns()
                 outputs = self.model(input_img)
                 t_end_eval = time.time_ns()
-                print("Evaluation took ", (t_end_eval-t_start_eval)/1000000000, " seconds")
+                logging.debug("Evaluation took " + (t_end_eval-t_start_eval)/1000000000 + " seconds")
+                ff += outputs
+        # norm feature
+        if self.PCB:
+            # feature size (n,2048,6)
+            # 1. To treat every part equally, I calculate the norm for every 2048-dim part feature.
+            # 2. To keep the cosine score==1, sqrt(6) is added to norm the whole feature (2048*6).
+            fnorm = torch.norm(ff, p=2, dim=1, keepdim=True) * np.sqrt(6) 
+            ff = ff.div(fnorm.expand_as(ff))
+            ff = ff.view(ff.size(0), -1)
+        else:
+            fnorm = torch.norm(ff, p=2, dim=1, keepdim=True)
+            ff = ff.div(fnorm.expand_as(ff))
+
+        features = torch.cat((features,ff.data.cpu()), 0)
+        return features.numpy()
+
+    def extract_feature_numpy(self, numpy_array):
+        features = torch.FloatTensor()
+        count = 0
+        tensor_list = []
+
+        for numpy in numpy_array:
+            image = Image.fromarray(numpy)
+            image_to_add = self.data_transforms(image)
+            image_to_add.unsqueeze_(0)
+            tensor_list += image_to_add
+
+        img = torch.stack(tensor_list)
+        n, c, h, w = img.size()
+        count += n
+        ff = torch.FloatTensor(n,512).zero_().cuda()
+        if self.PCB:
+            ff = torch.FloatTensor(n,2048,6).zero_().cuda() # we have six parts
+
+        for i in range(2):
+
+            if(i==1):
+                img = self.fliplr(img)
+                
+            input_img = Variable(img.cuda())
+            for scale in self.ms:
+                if scale != 1:
+                    input_img = nn.functional.interpolate(input_img, scale_factor=scale, mode='bicubic', align_corners=False)
+                t_start_eval = time.time_ns()
+                outputs = self.model(input_img)
+                t_end_eval = time.time_ns()
+                logging.debug("Evaluation took " + (t_end_eval-t_start_eval)/1000000000 + " seconds")
                 ff += outputs
         # norm feature
         if self.PCB:
