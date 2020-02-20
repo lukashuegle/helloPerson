@@ -26,7 +26,7 @@ sys.path.append("..")
 
 
 fps = cap.get(cv2.CAP_PROP_FPS)
-fe, rb = feature_extractor_wrapper.load_reID("ft_ResNet50", 2)
+fe, rb = feature_extractor_wrapper.load_reID("PCB", 2)
 
 # ## Object detection imports
 # Here are the imports from the object detection module.
@@ -124,7 +124,7 @@ with detection_graph.as_default():
         imgArray = []
         while True:
             # Start time
-            #print("Picture took ", (time.time_ns() - t_first)/1000000000, " seconds")
+            print("Picture took ", (time.time_ns() - t_first)/1000000000, " seconds")
             t_first = time.time_ns()
             start = time.time()
             ret, image_np = cap.read()
@@ -185,6 +185,7 @@ with detection_graph.as_default():
                 #t1.start()
                 imgArray.append(im_pil)
                 if len(imgArray) == 2:
+
                     #feature_extractor_wrapper.start_reID(fe, rb, imgArray)
                     t1 = threading.Thread(target=feature_extractor_wrapper.start_reID, args=(fe, rb, imgArray))
                     t1.start()
@@ -193,14 +194,14 @@ with detection_graph.as_default():
                 # im_pil.save("./test/pill" + str(i) + ".jpg")
                 i += 1
             
-            vis_util.visualize_boxes_and_labels_on_image_array(
-                image_np,
-                np.squeeze(boxes),
-                np.squeeze(classes).astype(np.int32),
-                np.squeeze(scores),
-                category_index,
-                use_normalized_coordinates=True,
-                line_thickness=8)
+            #vis_util.visualize_boxes_and_labels_on_image_array(
+            #    image_np,
+            #    np.squeeze(boxes),
+            #    np.squeeze(classes).astype(np.int32),
+            #    np.squeeze(scores),
+            #    category_index,
+            #    use_normalized_coordinates=True,
+            #    line_thickness=8)
             
             
             # End time

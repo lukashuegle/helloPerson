@@ -16,6 +16,7 @@ image4 = Image.open("../testdir/WIN_20200218_12_10_56_Pro.jpg")
 image5 = Image.open("../testdir/WIN_20200218_12_11_00_Pro.jpg")
 image0.load()
 image1.load()
+
 image2.load()
 image3.load()
 image4.load()
