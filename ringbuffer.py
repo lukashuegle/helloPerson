@@ -9,18 +9,23 @@ class Ringbuffer:
     def __init__(self, personnumber, featurenumber):
         self.ringbuffer = collections.deque(maxlen=personnumber)
         self.timebuffer = collections.deque(maxlen=personnumber)
+        self.imagebuffer = collections.deque(maxlen=personnumber)
         self.featurenumber = featurenumber
         logging.basicConfig(filename='ringbuffer_class.log', level=logging.DEBUG)
 
-    def addnewperson(self, featurearray):
+    def addnewperson(self, featurearray, image):
         self.ringbuffer.append(featurearray)
         self.timebuffer.append(datetime.now())
+        self.imagebuffer.append(image)
 
     def addnewfeature(self, position, feature):
         if len(self.ringbuffer[position]) >= self.featurenumber:
             self.ringbuffer[position] = self.ringbuffer[position][1:self.featurenumber]
         self.ringbuffer[position] = np.concatenate((np.array(self.ringbuffer[position]), np.array(feature)), axis=0)
         self.timebuffer[position] = datetime.now()
+
+    def getimage(self, position):
+        return self.imagebuffer[position]
 
     def lastseen(self, position):
         return self.timebuffer[position]
