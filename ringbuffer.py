@@ -14,13 +14,16 @@ class Ringbuffer:
 
     def addnewperson(self, featurearray):
         self.ringbuffer.append(featurearray)
-        self.timebuffer.append(datetime.now().strftime("%H:%M:%S"))
+        self.timebuffer.append(datetime.now())
 
     def addnewfeature(self, position, feature):
         if len(self.ringbuffer[position]) >= self.featurenumber:
             self.ringbuffer[position] = self.ringbuffer[position][1:self.featurenumber]
         self.ringbuffer[position] = np.concatenate((np.array(self.ringbuffer[position]), np.array(feature)), axis=0)
-        self.timebuffer[position] = datetime.now().strftime("%H:%M:%S")
+        self.timebuffer[position] = datetime.now()
+
+    def lastseen(self, position):
+        return self.timebuffer[position]
 
     def nearestneighbors(self, newefeature):
         smallestdistance = 100
