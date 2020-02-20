@@ -6,6 +6,7 @@ import numpy as np
 from PIL import Image
 import cv2
 import threading
+import sayhello
 
 THRESHHOLD_RE_ID = 0.65
 THRESHHOLD_NEW_ID = 1.05
@@ -18,6 +19,7 @@ class feature_extractor_wrapper:
         self.model = model
         self.batch_size = batch_size
         self.threading_queue = []
+        self.sayhello = sayhello.Sayhello(1, 150)
         image_show_thread = threading.Thread(target=self.image_viewer)
         image_show_thread.start()
 
@@ -29,7 +31,6 @@ class feature_extractor_wrapper:
         #return feature_extractor, ringbuffer
 
     def start_reID(self, img_array):
-
         t_singleimg_start = time.time_ns()
         feature_array = self.feature_extractor.extract_feature(img_array)
         t_singleimg_end = time.time_ns()
@@ -47,16 +48,18 @@ class feature_extractor_wrapper:
             if self.ringbuffer.ringbuffer:
                 logging.debug("Length of ringbuffer[0]" + str(len(self.ringbuffer.ringbuffer[0])))
             if smallest_distance <= THRESHHOLD_RE_ID:
+                last_seen = self.ringbuffer.lastseen(smallest_index)
+                self.sayhello.sayagain_async(last_seen)
                 self.ringbuffer.addnewfeature(smallest_index, feature)
                 img_old = self.ringbuffer.getimage(smallest_index)
-                if (time.time() - self.last_image_shown) >= 5:
-                    self.update(img_old)
-                #last_seen = ringbuffer.lastseen(smallest_index)
-                #print("Letztes mal gesehen: " + last_seen)
+                #if (time.time() - self.last_image_shown) >= 5:
+                self.update(img_old)
                 
             elif smallest_distance >= THRESHHOLD_NEW_ID:
                 self.ringbuffer.addnewperson(feature, np.array(img_array[count]))
-                print("Willkommen!")
+                self.sayhello.sayhello_async()
+                
+
             count += 1
 
     def update(self, image):
@@ -68,5 +71,6 @@ class feature_extractor_wrapper:
         while True:
             if len(self.threading_queue) > 0:
                 img = self.threading_queue.pop(0)
-            cv2.imshow("image", img)
+            cv2.imshow("image", cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
+
             cv2.waitKey(30)

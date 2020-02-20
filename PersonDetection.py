@@ -26,7 +26,7 @@ sys.path.append("..")
 
 
 fps = cap.get(cv2.CAP_PROP_FPS)
-feature_extractor = feature_extractor_wrapper.feature_extractor_wrapper("ft_ResNet50", 2)
+feature_extractor = feature_extractor_wrapper.feature_extractor_wrapper("ft_ResNet50", 6)
 feature_extractor.load_reID()
 
 # ## Object detection imports
@@ -185,9 +185,9 @@ with detection_graph.as_default():
                 #t1 = threading.Thread(target=feature_extractor_wrapper.start_reID, args=(fe, rb, [im_pil]))
                 #t1.start()
                 imgArray.append(im_pil)
-                if len(imgArray) == 2:
+                if len(imgArray) == 6:
 
-                    #feature_extractor_wrapper.start_reID(fe, rb, imgArray)
+                    #feature_extractor.start_reID(imgArray)
                     t1 = threading.Thread(target=feature_extractor.start_reID, args=(imgArray,))
                     t1.start()
                     imgArray = []
