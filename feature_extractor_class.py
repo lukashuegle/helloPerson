@@ -102,7 +102,7 @@ class feature_extraction:
         self.load_model()
         #start model optimization for 1 image
         imgArray = []
-        img = Image.open("../testdir/WIN_20200218_12_11_00_Pro.jpg")
+        img = Image.open("../../testdir/WIN_20200218_12_11_00_Pro.jpg")
         for i in range(batch_size):
             imgArray.append(img)
         self.extract_feature(imgArray)
