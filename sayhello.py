@@ -18,10 +18,10 @@ class Sayhello:
         seconds_in_day = 24 * 60 * 60
         time = divmod(difference.days * seconds_in_day + difference.seconds, 60)
         if time[0] == 0:
-            self.engine.say('Hallo Again')
+            self.engine.say('Hallo')
             self.engine.say('Ich habe Sie das letze mal vor ' + str(time[1]) + ' Sekunden gesehen')
         else:
-            self.engine.say('Hallo Again')
+            self.engine.say('Hallo')
             self.engine.say('Ich habe Sie das letze mal vor ' + str(time[0]))
             self.engine.say(' Minuten und ' + str(time[1]) + 'Sekunden gesehen')
         self.engine.runAndWait()
