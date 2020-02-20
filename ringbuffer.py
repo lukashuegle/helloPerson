@@ -11,7 +11,7 @@ class Ringbuffer:
         self.featurenumber = featurenumber
 
     def addnewperson(self, featurearray):
-        self.ringbuffer.append([featurearray])
+        self.ringbuffer.append(featurearray)
         self.timebuffer.append(datetime.now().strftime("%H:%M:%S"))
 
     def addnewfeature(self, position, feature):
@@ -25,11 +25,15 @@ class Ringbuffer:
         distance = np.arange(0)
         for person in self.ringbuffer:
             neigh = NearestNeighbors(n_neighbors=1)
+            print(self.ringbuffer)
             neigh.fit(person)
             distances, _ = neigh.kneighbors(newefeature)
             distance = np.append(distance, np.amin(distances))
-        smallestdistance = np.amin(distance)
-        indexofsmallest = (np.where(distance == smallestdistance))[0][0]
+        smallestdistance = 100
+        indexofsmallest = -1
+        if distance.size > 0:
+            smallestdistance = np.amin(distance)
+            indexofsmallest = (np.where(distance == smallestdistance))[0][0]
         return indexofsmallest, smallestdistance
 
 
