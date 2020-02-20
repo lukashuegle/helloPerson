@@ -2,3 +2,16 @@ data
 model
 ssd_inception_v2_coco_2018_01_28
 utils
+tests/hello_again_test.py
+tests/ringbuffer_class.log
+tests/test_buffer.py
+.idea/.gitignore
+.idea/helloPerson.iml
+.idea/misc.xml
+.idea/modules.xml
+.idea/other.xml
+.idea/vcs.xml
+.idea/inspectionProfiles/profiles_settings.xml
+__pycache__/ringbuffer.cpython-37.pyc
+__pycache__/sayhello.cpython-37.pyc
+__init__.py
