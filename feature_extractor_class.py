@@ -31,7 +31,7 @@ except ImportError: # will be 3.x series
 # --------
 class feature_extraction:
 
-    def __init__(self, gpu_ids, model_name, ms):
+    def __init__(self, gpu_ids, model_name, ms, batch_size):
         logging.basicConfig(filename='feature_extractor_class.log', level=logging.INFO)
 
         t_start_init = time.time_ns()
@@ -101,11 +101,25 @@ class feature_extraction:
 
         self.load_model()
         #start model optimization for 1 image
-        img = self.data_transforms(Image.open("../testdir/WIN_20200218_12_11_00_Pro.jpg")).unsqueeze_(0).cuda()
-        self.model(img)
+        imgArray = []
+        img = Image.open("../testdir/WIN_20200218_12_11_00_Pro.jpg")
+        for i in range(batch_size):
+            imgArray.append(img)
+        self.extract_feature(imgArray)
+        t_start_init = time.time_ns()
+        self.extract_feature(imgArray)
         t_end_init = time.time_ns()
-        logging.debug("Init took " + (t_end_init - t_start_init)/1000000000 + " seconds")
+        self.batch_time = (t_end_init - t_start_init)/1000000000
+        logging.debug("Batch time is" + str(self.batch_time) + "seconds")
+        print(self.batch_time)
+        #print("Init took " + str((t_end_init - t_start_init)/1000000000) + " seconds")
 
+
+    def get_batchtime(self):
+        return self.batch_time
+
+    def get_batchsize(self):
+        return self.batch_size
 
     ######################################################################
     # Load model
@@ -159,7 +173,7 @@ class feature_extraction:
                 t_start_eval = time.time_ns()
                 outputs = self.model(input_img)
                 t_end_eval = time.time_ns()
-                logging.debug("Evaluation took " + (t_end_eval-t_start_eval)/1000000000 + " seconds")
+                logging.debug("Evaluation took " + str((t_end_eval-t_start_eval)/1000000000) + " seconds")
                 ff += outputs
         # norm feature
         if self.PCB:
@@ -206,7 +220,7 @@ class feature_extraction:
                 t_start_eval = time.time_ns()
                 outputs = self.model(input_img)
                 t_end_eval = time.time_ns()
-                logging.debug("Evaluation took " + (t_end_eval-t_start_eval)/1000000000 + " seconds")
+                logging.debug("Evaluation took " + str((t_end_eval-t_start_eval)/1000000000) + " seconds")
                 ff += outputs
         # norm feature
         if self.PCB:
