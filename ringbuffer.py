@@ -39,7 +39,7 @@ class Ringbuffer:
         if self.ringbuffer:
             distance = np.arange(0)
             for person in self.ringbuffer:
-                neigh = NearestNeighbors(n_neighbors=1)
+                neigh = NearestNeighbors(n_neighbors=1, algorithm='brute')
                 neigh.fit(person)
                 distances, _ = neigh.kneighbors(newefeature)
                 distance = np.append(distance, np.amin(distances))
