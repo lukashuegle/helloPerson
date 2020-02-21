@@ -4,7 +4,7 @@ ssd_inception_v2_coco_2018_01_28
 utils
 tests/hello_again_test.py
 tests/ringbuffer_class.log
-tests/test_buffer.py
+test_buffer.py
 .idea/.gitignore
 .idea/helloPerson.iml
 .idea/misc.xml
