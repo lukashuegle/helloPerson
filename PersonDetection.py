@@ -26,7 +26,7 @@ sys.path.append("..")
 
 
 fps = cap.get(cv2.CAP_PROP_FPS)
-feature_extractor = feature_extractor_wrapper.feature_extractor_wrapper("ft_ResNet50", 6)
+feature_extractor = feature_extractor_wrapper.feature_extractor_wrapper("ft_ResNet50", 8)
 feature_extractor.load_reID()
 
 # ## Object detection imports
@@ -123,9 +123,10 @@ with detection_graph.as_default():
     with tf.Session(graph=detection_graph) as sess:
         t_first = time.time_ns()
         imgArray = []
+        t1 = None
         while True:
             # Start time
-            print("Picture took ", (time.time_ns() - t_first)/1000000000, " seconds")
+            #print("Picture took ", (time.time_ns() - t_first)/1000000000, " seconds")
             t_first = time.time_ns()
             start = time.time()
             ret, image_np = cap.read()
@@ -181,12 +182,16 @@ with detection_graph.as_default():
                 bounding_box_img.append(image_np[c[1]:c[3], c[0]:c[2], :])
                 #cv2.imwrite("./test/abc" + str(i) + ".jpg", bounding_box_img[i])
                 im_np = bounding_box_img[i]
-                im_pil = im.fromarray(cv2.cvtColor(bounding_box_img[i], cv2.COLOR_BGR2RGB))
+                #im_pil = im.fromarray(cv2.cvtColor(bounding_box_img[i], cv2.COLOR_BGR2RGB))
                 #t1 = threading.Thread(target=feature_extractor_wrapper.start_reID, args=(fe, rb, [im_pil]))
                 #t1.start()
-                imgArray.append(im_pil)
-                if len(imgArray) == 6:
-
+                imgArray.append(im_np)
+                if len(imgArray) == 8:
+                    t_join_start = time.time_ns()
+                    if t1 is not None:
+                        t1.join()
+                    t_join_end = time.time_ns()
+                    #print("Waited for Thread for", (t_join_end - t_join_start)/1000000000, "seconds")
                     #feature_extractor.start_reID(imgArray)
                     t1 = threading.Thread(target=feature_extractor.start_reID, args=(imgArray,))
                     t1.start()
@@ -211,7 +216,7 @@ with detection_graph.as_default():
             # Time elapsed
             seconds = end - start
             
-            fps  = 1/seconds;
+            fps  = 1/seconds
             #print ("Estimated frames per second : {0}".format(fps))
             #print ("Test : {0}".format(cap.get(1)))
             #print(load_image_into_numpy_array(image_np))

@@ -7,9 +7,11 @@ from PIL import Image
 import cv2
 import threading
 import sayhello
+import datetime
+import collections
 
 THRESHHOLD_RE_ID = 0.65
-THRESHHOLD_NEW_ID = 1.05
+THRESHHOLD_NEW_ID = 1.059
 FEATURE_SIZE = 60
 
 class feature_extractor_wrapper:
@@ -19,8 +21,12 @@ class feature_extractor_wrapper:
         self.model = model
         self.batch_size = batch_size
         self.threading_queue = []
+        self.speaking_queue = collections.deque(maxlen=1)
         self.sayhello = sayhello.Sayhello(1, 150)
+        self.last_person = -1
         image_show_thread = threading.Thread(target=self.image_viewer)
+        text_speak_thread = threading.Thread(target=self.text_to_speech_t)
+        text_speak_thread.start()
         image_show_thread.start()
 
 
@@ -32,7 +38,7 @@ class feature_extractor_wrapper:
 
     def start_reID(self, img_array):
         t_singleimg_start = time.time_ns()
-        feature_array = self.feature_extractor.extract_feature(img_array)
+        feature_array = self.feature_extractor.extract_feature_numpy(img_array)
         t_singleimg_end = time.time_ns()
         logging.debug("Batch feature extraction took" + str((t_singleimg_end - t_singleimg_start)/1000000000) + "seconds")
         #print(feature)
@@ -41,23 +47,28 @@ class feature_extractor_wrapper:
             feature = [feature]
             #print(feature)
             smallest_index, smallest_distance = self.ringbuffer.nearestneighbors(feature)
-            print(smallest_distance)
+            #print(smallest_distance)
             logging.debug("Smallest distance: " + str(smallest_distance))
-            print(len(self.ringbuffer.ringbuffer))
+            #print(len(self.ringbuffer.ringbuffer))
             logging.debug("Length of ringbuffer: " + str(len(self.ringbuffer.ringbuffer)))
             if self.ringbuffer.ringbuffer:
                 logging.debug("Length of ringbuffer[0]" + str(len(self.ringbuffer.ringbuffer[0])))
             if smallest_distance <= THRESHHOLD_RE_ID:
                 last_seen = self.ringbuffer.lastseen(smallest_index)
-                self.sayhello.sayagain_async(last_seen)
+                #self.sayhello.sayagain_async(last_seen)
                 self.ringbuffer.addnewfeature(smallest_index, feature)
                 img_old = self.ringbuffer.getimage(smallest_index)
-                #if (time.time() - self.last_image_shown) >= 5:
+                #self.speaking_queue.append(last_seen)
+                #if person_id != self.last_person:
+                print("Hallo ich habe sie das letzte mal ", last_seen, "gesehen")
+                #    self.last_person = person_id
                 self.update(img_old)
                 
             elif smallest_distance >= THRESHHOLD_NEW_ID:
                 self.ringbuffer.addnewperson(feature, np.array(img_array[count]))
-                self.sayhello.sayhello_async()
+                print("Herzlich Willkommen!")
+                #self.speaking_queue.append(1)
+                #self.sayhello.sayhello_async()
                 
 
             count += 1
@@ -67,10 +78,26 @@ class feature_extractor_wrapper:
         self.threading_queue.append(image)
 
     def image_viewer(self):
-        img = np.array(Image.open("../../testdir/WIN_20200218_11_23_35_Pro (2).jpg"))
+        img = cv2.cvtColor(np.array(Image.open("../../testdir/initial.png")), cv2.COLOR_RGB2BGR)
         while True:
             if len(self.threading_queue) > 0:
                 img = self.threading_queue.pop(0)
-            cv2.imshow("image", cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
+            cv2.imshow("image", img)
 
             cv2.waitKey(30)
+
+    def text_to_speech_t(self):
+        last_spoken = time.time() - 5
+        obj = None
+        #time.sleep(0.1)
+        while True:
+            time.sleep(0.000000000001)
+            if len(self.speaking_queue) > 0:
+                obj = self.speaking_queue.pop(0)
+            #print((time.time() - last_spoken))
+            if  (time.time() - last_spoken) >= 5 and (obj is not None):
+                last_spoken = time.time()
+                if obj == 1:
+                    self.sayhello.sayhello()
+                else:
+                    self.sayhello.sayagain(obj)

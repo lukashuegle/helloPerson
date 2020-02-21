@@ -20,6 +20,7 @@ import yaml
 import math
 from PIL import Image
 from model import ft_net, ft_net_dense, ft_net_NAS, PCB, PCB_test
+import cv2
 
 #fp16
 try:
@@ -196,7 +197,7 @@ class feature_extraction:
         tensor_list = []
 
         for numpy in numpy_array:
-            image = Image.fromarray(numpy)
+            image = Image.fromarray(cv2.cvtColor(numpy, cv2.COLOR_BGR2RGB))
             image_to_add = self.data_transforms(image)
             image_to_add.unsqueeze_(0)
             tensor_list += image_to_add
